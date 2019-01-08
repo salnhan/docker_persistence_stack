@@ -1,0 +1,70 @@
+version: '3.3'
+
+services:
+  mongo:
+    container_name: mongo_db
+    image: mongo:latest
+    user: "${UID_GID}"
+    volumes:
+       - ./data/mongo:/data/mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - persistence
+    restart: always
+
+  redis:
+    container_name: redis_db
+    build:
+      context: dockerfiles/redis
+      dockerfile: Dockerfile
+    command: ["redis-server", "--append-only", "yes"]
+    volumes:
+      - ./data/redis:/data/redis
+    user: "${UID_GID}"
+    ports:
+      - "6379:6379"
+    networks:
+      - persistence
+    restart: always
+
+  postgresql:
+    container_name: postgresql_db
+    build:
+      context: dockerfiles/postgres
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_USER: ckan_default
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: ckan_default
+      LANG: de_DE.utf8
+    volumes:
+      - type: volume
+      - source: data_postgres_db
+      - target: /data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - persistence
+    restart: always
+
+  mysql:
+    container_name: mysql_db
+    image: mysql:5.7
+    volumes:
+      - type: volume
+      - source: data_mysql_db
+      - target: /data/postgres
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD: 'justapassword'
+    networks:
+    - persistence
+    restart: always
+
+networks:
+  persistence:
+
+volumes:
+  data_postgres_db:
